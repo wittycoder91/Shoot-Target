@@ -9,6 +9,7 @@ import { loadModels } from "./config/Models";
 import { loadTargetTextues } from "./config/TargetTexure";
 import { CylinderBufferGeometry, PlaneBufferGeometry } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import gsap from "gsap";
 import World from "./physics/world";
 import { loadFlagBaseTextures } from "./config/FlagBaseTextures";
@@ -102,6 +103,7 @@ const loadingManger = new THREE.LoadingManager(
   }
 );
 const gltfLoader = new GLTFLoader(loadingManger);
+const fbxLoader = new FBXLoader(loadingManger);
 const textureLoader = new THREE.TextureLoader(loadingManger);
 // const audioLoader = new THREE.AudioLoader(loadingManger);
 // audioLoader.load("sounds/cannonShootingSound.mp3", (audioBuffer) => {
@@ -371,6 +373,60 @@ barrel.rotation.x = (-Math.PI / 4) * 1.5;
 barrel.material.roughness = 0.5;
 barrel.material.side = THREE.DoubleSide;
 // cannon.add(barrel);
+
+
+
+let playerModel = null;
+fbxLoader.load('models/player/player.fbx', (fbx) => {
+  console.log('Player model loaded successfully:', fbx);
+  playerModel = fbx;
+  
+  // Calculate bounding box to understand model size
+  const box = new THREE.Box3().setFromObject(playerModel);
+  const size = box.getSize(new THREE.Vector3());
+  console.log('Player model size:', size);
+  
+  // Position the model at the same location as barrel
+  playerModel.position.set(0, 10, 660);
+  playerModel.rotation.x = -170;
+  
+  // Scale the model to be visible (FBX models can be very small or very large)
+  // Try different scales to make it visible
+  const scaleFactor = 10; // Start with a reasonable scale
+  playerModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+  console.log('Player model scaled by:', scaleFactor);
+  
+  // Enable shadows and ensure visibility for player model
+  playerModel.traverse((child) => {
+    if (child.isMesh) {
+      child.castShadow = true;
+      child.receiveShadow = true;
+      
+      // Ensure the mesh is visible
+      child.visible = true;
+      
+      // If no material or transparent material, add a basic material
+      if (!child.material || child.material.transparent) {
+        child.material = new THREE.MeshStandardMaterial({
+          color: 0xff0000, // Red color to make it easily visible
+          metalness: 0.1,
+          roughness: 0.8
+        });
+        console.log('Applied basic material to mesh:', child.name || 'unnamed');
+      }
+      
+      console.log('Applied shadows to mesh:', child.name || 'unnamed');
+    }
+  });
+  
+  cannon.add(playerModel);
+  console.log('Player model added to cannon group');
+}, undefined, (error) => {
+  console.error('Error loading player model:', error);
+});
+
+
+
 
 const cannonCover = new THREE.Mesh(
   new THREE.SphereBufferGeometry(3, 32, 32),
