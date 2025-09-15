@@ -81,33 +81,6 @@ const paramters = {
   frictionCoeff: 0.8,
   mass: 1000,
   speed: 20,
-  type: 0,
-  types: {
-    default() {
-      paramters.type = 0;
-      paramters.ballTextures = ballTextures[0];
-      coefficientsFolder.show();
-      massController.domElement.hidden = false;
-    },
-    wood() {
-      paramters.type = 1;
-      paramters.ballTextures = ballTextures[1];
-      coefficientsFolder.hide();
-      massController.domElement.hidden = true;
-    },
-    steal() {
-      paramters.type = 2;
-      paramters.ballTextures = ballTextures[0];
-      coefficientsFolder.hide();
-      massController.domElement.hidden = true;
-    },
-    rubber() {
-      paramters.type = 3;
-      paramters.ballTextures = ballTextures[2];
-      coefficientsFolder.hide();
-      massController.domElement.hidden = true;
-    },
-  },
 };
 
 /*
@@ -130,10 +103,10 @@ const loadingManger = new THREE.LoadingManager(
 );
 const gltfLoader = new GLTFLoader(loadingManger);
 const textureLoader = new THREE.TextureLoader(loadingManger);
-const audioLoader = new THREE.AudioLoader(loadingManger);
-audioLoader.load("sounds/cannonShootingSound.mp3", (audioBuffer) => {
-  shootingSoundEffect.setBuffer(audioBuffer);
-});
+// const audioLoader = new THREE.AudioLoader(loadingManger);
+// audioLoader.load("sounds/cannonShootingSound.mp3", (audioBuffer) => {
+//   shootingSoundEffect.setBuffer(audioBuffer);
+// });
 
 /*
     Game Screen
@@ -222,12 +195,6 @@ ballFolder
 ballFolder
   .add(paramters, "angular_speedZ", -10, 10, 0.1)
   .name("Angular speed Z");
-const subFolder = ballFolder.addFolder("types");
-subFolder.add(paramters.types, "default");
-subFolder.add(paramters.types, "wood");
-subFolder.add(paramters.types, "steal");
-subFolder.add(paramters.types, "rubber");
-subFolder.open();
 
 coefficientsFolder.add(paramters, "dragCoeff", 0, 1, 0.001).name("dragCoeff");
 coefficientsFolder
@@ -246,13 +213,13 @@ const targetTextures = loadTargetTextues(textureLoader);
 const flagBaseTexutes = loadFlagBaseTextures(textureLoader);
 const flagTextures = loadFlagTexture(textureLoader);
 const ballTextures = loadBallTextures(textureLoader);
-paramters.ballTextures = ballTextures;
-paramters.types.default();
+paramters.ballTextures = ballTextures[0];
 
 /* 
     Models
 */
-loadModels(scene, gltfLoader, intersectObjects);
+// loadModels(scene, gltfLoader, intersectObjects);
+loadModels(scene, gltfLoader);
 
 /*
     Events
@@ -316,7 +283,7 @@ window.addEventListener("click", () => {
     window.performance.now() - lastShotingTime > SHOOT_DELAY
   ) {
     isClicked = false;
-    shootingSoundEffect.play();
+    // shootingSoundEffect.play();
     createCannonBall();
     let zPosition = cannon.position.z;
     gsap.to(cannon.position, {
@@ -366,11 +333,11 @@ scene.add(chasingCamera);
 /*
     Sounds
 */
-const audioListener = new THREE.AudioListener();
-camera.add(audioListener);
-chasingCamera.add(audioListener);
-const shootingSoundEffect = new THREE.Audio(audioListener);
-scene.add(shootingSoundEffect);
+// const audioListener = new THREE.AudioListener();
+// camera.add(audioListener);
+// chasingCamera.add(audioListener);
+// const shootingSoundEffect = new THREE.Audio(audioListener);
+// scene.add(shootingSoundEffect);
 
 /*
     Lights
@@ -385,6 +352,7 @@ scene.add(directionalLight);
 /*
     Objects
 */
+// ------------------ Add the shooting object ----------------------
 const cannon = new THREE.Group();
 scene.add(cannon);
 const metalMaterial = new THREE.MeshStandardMaterial({
@@ -402,7 +370,7 @@ barrel.position.set(0, 10, 660);
 barrel.rotation.x = (-Math.PI / 4) * 1.5;
 barrel.material.roughness = 0.5;
 barrel.material.side = THREE.DoubleSide;
-cannon.add(barrel);
+// cannon.add(barrel);
 
 const cannonCover = new THREE.Mesh(
   new THREE.SphereBufferGeometry(3, 32, 32),
@@ -430,21 +398,23 @@ floor.geometry.setAttribute(
   new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
 );
 floor.rotation.x = -Math.PI / 2;
+// ------------------ Add the playground ----------------------
 scene.add(floor);
 
-const base = new THREE.Mesh(
-  new THREE.BoxBufferGeometry(20, 4, 32, 32),
-  new THREE.MeshStandardMaterial({
-    map: baseTextures.baseColorTexture,
-    aoMap: baseTextures.baseAmbientOcclusionTexture,
-    roughnessMap: baseTextures.baseRoughnessTexture,
-    metalnessMap: baseTextures.baseMetalnessTexture,
-    normalMap: baseTextures.baseNormalTexture,
-  })
-);
-base.position.copy(barrel.position.clone());
-base.position.y += -8.8;
-scene.add(base);
+// ------------------ Add the base ----------------------
+// const base = new THREE.Mesh(
+//   new THREE.BoxBufferGeometry(20, 4, 32, 32),
+//   new THREE.MeshStandardMaterial({
+//     map: baseTextures.baseColorTexture,
+//     aoMap: baseTextures.baseAmbientOcclusionTexture,
+//     roughnessMap: baseTextures.baseRoughnessTexture,
+//     metalnessMap: baseTextures.baseMetalnessTexture,
+//     normalMap: baseTextures.baseNormalTexture,
+//   })
+// );
+// base.position.copy(barrel.position.clone());
+// base.position.y += -8.8;
+// scene.add(base);
 
 const flagBase = new THREE.Mesh(
   new CylinderBufferGeometry(1, 1, 35, 32),
@@ -482,9 +452,10 @@ flag.scale.y = 2 / 3;
 scene.add(flag);
 
 let target = new THREE.Mesh(
-  new THREE.CircleGeometry(8, 32),
+  new THREE.PlaneGeometry(22.4, 16),
   new THREE.MeshStandardMaterial({
     map: targetTextures.targetColorTexture,
+    alphaTest: 0.1,
   })
 );
 target.position.set(0, 40, 480);
@@ -559,7 +530,7 @@ directionalLight.shadow.mapSize.y = 1024;
 directionalLight.castShadow = true;
 floor.receiveShadow = true;
 barrel.castShadow = true;
-base.receiveShadow = true;
+// base.receiveShadow = true;
 
 /*
     Utils
@@ -590,21 +561,32 @@ const createCannonBall = () => {
   removeBallsGreaterThanOne();
   numberOfBalls--;
   numberofBallsWidget.innerHTML = numberOfBalls;
+  // Create a regular sphere and scale it to football shape
+  const footballGeometry = new THREE.SphereGeometry(paramters.radius * 5, 32, 32);
+  
+  // Configure texture settings
+  paramters.ballTextures.color.wrapS = THREE.RepeatWrapping;
+  paramters.ballTextures.color.wrapT = THREE.RepeatWrapping;
+  paramters.ballTextures.color.flipY = false;
+  
   let cannonBall = new THREE.Mesh(
-    new THREE.SphereGeometry(paramters.radius * 5, 32, 32),
-    new THREE.MeshStandardMaterial({
+    footballGeometry,
+    new THREE.MeshBasicMaterial({
       map: paramters.ballTextures.color,
-      aoMap: paramters.ballTextures.ao,
-      roughnessMap: paramters.ballTextures.roughness,
-      normalMap: paramters.ballTextures.normal,
-      metalnessMap: paramters.ballTextures.metalness,
+      color: 0x654321, // Dark brown tint to make it darker
+      side: THREE.DoubleSide,
+      transparent: false,
     })
   );
+  
+  // Scale to make it football-shaped (this preserves UV mapping)
+  cannonBall.scale.set(1.1, 0.7, 0.7);
   cannonBall.castShadow = true;
   cannonBall.position.copy(
     barrel.position.clone().add(new THREE.Vector3(0, 3.5, -1))
   );
   scene.add(cannonBall);
+
   if (axesHelper) {
     scene.remove(axesHelper);
   }
@@ -621,7 +603,7 @@ const createCannonBall = () => {
     angleXY,
     angleXZ,
     paramters.radius,
-    paramters.type,
+    0,
     paramters.mass,
     paramters.dragCoeff,
     angular_speed,
@@ -650,9 +632,10 @@ const removeBallsGreaterThanOne = () => {
 const updateTarget = (obj) => {
   setTimeout(() => {
     target = new THREE.Mesh(
-      new THREE.CircleGeometry(8, 32),
+      new THREE.PlaneGeometry(22.4, 16),
       new THREE.MeshStandardMaterial({
         map: targetTextures.targetColorTexture,
+        alphaTest: 0.1,
       })
     );
     target.position.copy(
@@ -755,6 +738,7 @@ const tick = () => {
   const delteTime = elapsedTime - oldElapsedTime;
   world.update(delteTime);
   oldElapsedTime = elapsedTime;
+
   for (const object of objectsToUpdate) {
     object.cannonBall.position.copy(object.physicsBall.position);
     object.cannonBall.quaternion.copy(object.physicsBall.quaternion);
@@ -768,14 +752,14 @@ const tick = () => {
     for (let intersect of intersects) {
       if (
         !shotedTaregt.includes(intersect.object) &&
-        intersect.object.geometry.type === "CircleGeometry"
+        intersect.object.geometry.type === "PlaneGeometry"
       ) {
         shotedTaregt.push(intersect.object);
         intersect.object.material.color.set("#ff0000");
         updateTarget(intersect.object);
         upadteWidgets();
         checkGame();
-      } else if (intersect.object.geometry.type !== "CircleGeometry") {
+      } else if (intersect.object.geometry.type !== "PlaneGeometry") {
         object.physicsBall.fraction(intersect);
       }
     }
