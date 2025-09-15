@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 // export const loadModels = (scene, gltfLoader, intersectObjects) => {
-  export const loadModels = (scene, gltfLoader) => {
+  export const loadModels = (scene) => {
     // Load flag texture for fence material
   const flagTexture = new THREE.TextureLoader().load("textures/flag/flag.jpg");
   flagTexture.wrapS = THREE.RepeatWrapping;
@@ -13,68 +13,42 @@ import * as THREE from "three";
     side: THREE.DoubleSide,
   });
 
-  gltfLoader.load("models/fens/scene.gltf", (gltfModel) => {
-    gltfModel.scene.scale.set(15, 15, 15);
-    gltfModel.scene.position.set(-120, 4, 40);
-    gltfModel.scene.rotation.y = Math.PI * 0.5;
+  // Create fence/ad board geometry directly without loading GLTF model
+  // First row of ad boards (left side)
+  for (let i = -22; i < 22; i++) {
+    const adBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 30, 50),
+      flagMaterial
+    );
+    adBoard.position.set(-150, 4, 500 + (i * 50));
+    adBoard.castShadow = true;
+    adBoard.receiveShadow = true;
+    scene.add(adBoard);
+  }
 
-    gltfModel.scene.traverse(function (node) {
-      if (node instanceof THREE.Mesh) {
-        node.material = flagMaterial; // Replace material with flag texture
-        node.castShadow = true;
-        node.receiveShadow = true;
-      }
-    });
+  // Second row of ad boards (right side)
+  for (let i = -22; i < 22; i++) {
+    const adBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 30, 50),
+      flagMaterial
+    );
+    adBoard.position.set(270, 4, 500 + (i * 50));
+    adBoard.castShadow = true;
+    adBoard.receiveShadow = true;
+    scene.add(adBoard);
+  }
 
-    for (let i = -22; i < 22; i++) {
-      // fens = gltfModel.scene.clone();
-      // fens.position.z = fens.position.z * i;
-      // scene.add(fens);
-
-      const adBoard = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 30, 50),
-        flagMaterial
-      );
-      adBoard.position.set(-150, 4, 500 + (i * 50));
-      adBoard.castShadow = true;
-      adBoard.receiveShadow = true;
-      scene.add(adBoard);
-    }
-    gltfModel.scene.position.set(270, 4, 40);
-    gltfModel.scene.rotation.y = Math.PI * 0.5;
-
-    for (let i = -22; i < 22; i++) {
-      // fens2 = gltfModel.scene.clone();
-      // fens2.position.z = fens2.position.z * i;
-      // scene.add(fens2);
-
-      const adBoard = new THREE.Mesh(
-        new THREE.BoxGeometry(2, 30, 50),
-        flagMaterial
-      );
-      adBoard.position.set(270, 4, 500 + (i * 50));
-      adBoard.castShadow = true;
-      adBoard.receiveShadow = true;
-      scene.add(adBoard);
-    }
-    gltfModel.scene.rotation.y = Math.PI;
-    gltfModel.scene.position.set(24.6, 5, -800);
-    
-    for (let i = -6; i < 2; i++) {
-      // fens3 = gltfModel.scene.clone();
-      // fens3.position.x += i * 25;
-      // scene.add(fens3);
-      
-      const adBoard = new THREE.Mesh(
-        new THREE.BoxGeometry(52.5, 30, 2),
-        flagMaterial
-      );
-      adBoard.position.set(192 + (i * 52.5), 4, -620);
-      adBoard.castShadow = true;
-      adBoard.receiveShadow = true;
-      scene.add(adBoard);
-    }
-  });
+  // Third row of ad boards (back side)
+  for (let i = -6; i < 2; i++) {
+    const adBoard = new THREE.Mesh(
+      new THREE.BoxGeometry(52.5, 30, 2),
+      flagMaterial
+    );
+    adBoard.position.set(192 + (i * 52.5), 4, -620);
+    adBoard.castShadow = true;
+    adBoard.receiveShadow = true;
+    scene.add(adBoard);
+  }
   
   // gltfLoader.load("models/tree/scene.gltf", (gltfModel) => {
   //   gltfModel.scene.traverse(function (node) {
