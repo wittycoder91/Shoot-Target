@@ -491,7 +491,7 @@ flag.scale.y = 2 / 3;
 scene.add(flag);
 
 let target = new THREE.Mesh(
-  new THREE.PlaneGeometry(22.4, 16),
+  new THREE.PlaneGeometry(35, 22),
   new THREE.MeshStandardMaterial({
     map: targetTextures.targetColorTexture,
     alphaTest: 0.1,
@@ -684,7 +684,7 @@ const removeBallsGreaterThanOne = () => {
 const updateTarget = (obj) => {
   setTimeout(() => {
     target = new THREE.Mesh(
-      new THREE.PlaneGeometry(22.4, 16),
+      new THREE.PlaneGeometry(35, 22),
       new THREE.MeshStandardMaterial({
         map: targetTextures.targetColorTexture,
         alphaTest: 0.1,
