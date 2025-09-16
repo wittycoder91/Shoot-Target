@@ -3,7 +3,7 @@ import * as THREE from "three";
 import * as dat from "dat.gui";
 import loadGrassTextures from "./config/GrassTexture";
 import { loadCannonTextures } from "./config/CannonTextures";
-import { loadBaseTextures } from "./config/BaseTexures";
+// import { loadBaseTextures } from "./config/BaseTexures";
 import Ball from "./physics/ball";
 import { loadModels } from "./config/Models";
 import { loadTargetTextues } from "./config/TargetTexure";
@@ -102,7 +102,7 @@ const loadingManger = new THREE.LoadingManager(
     loadingBar.style.transform = "scaleX(" + itemsLoaded / itemsTotal + ")";
   }
 );
-const gltfLoader = new GLTFLoader(loadingManger);
+// const gltfLoader = new GLTFLoader(loadingManger);
 const fbxLoader = new FBXLoader(loadingManger);
 const textureLoader = new THREE.TextureLoader(loadingManger);
 // const audioLoader = new THREE.AudioLoader(loadingManger);
@@ -210,7 +210,7 @@ coefficientsFolder
 */
 const grassTextures = loadGrassTextures(textureLoader);
 const cannonTextures = loadCannonTextures(textureLoader);
-const baseTextures = loadBaseTextures(textureLoader);
+// const baseTextures = loadBaseTextures(textureLoader);
 const targetTextures = loadTargetTextues(textureLoader);
 const flagBaseTexutes = loadFlagBaseTextures(textureLoader);
 const flagTextures = loadFlagTexture(textureLoader);
@@ -221,7 +221,7 @@ paramters.ballTextures = ballTextures[0];
     Models
 */
 // loadModels(scene, gltfLoader, intersectObjects);
-loadModels(scene, gltfLoader);
+loadModels(scene);
 
 /*
     Events
@@ -374,59 +374,42 @@ barrel.material.roughness = 0.5;
 barrel.material.side = THREE.DoubleSide;
 // cannon.add(barrel);
 
+// Create ball model that matches the cannon ball
+let ballModel = null;
 
+// Create the same geometry as the cannon ball
+const ballGeometry = new THREE.SphereGeometry(paramters.radius * 5, 32, 32);
 
-let playerModel = null;
-fbxLoader.load('models/player/player.fbx', (fbx) => {
-  console.log('Player model loaded successfully:', fbx);
-  playerModel = fbx;
-  
-  // Calculate bounding box to understand model size
-  const box = new THREE.Box3().setFromObject(playerModel);
-  const size = box.getSize(new THREE.Vector3());
-  console.log('Player model size:', size);
-  
-  // Position the model at the same location as barrel
-  playerModel.position.set(0, 10, 660);
-  playerModel.rotation.x = -170;
-  
-  // Scale the model to be visible (FBX models can be very small or very large)
-  // Try different scales to make it visible
-  const scaleFactor = 10; // Start with a reasonable scale
-  playerModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-  console.log('Player model scaled by:', scaleFactor);
-  
-  // Enable shadows and ensure visibility for player model
-  playerModel.traverse((child) => {
-    if (child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-      
-      // Ensure the mesh is visible
-      child.visible = true;
-      
-      // If no material or transparent material, add a basic material
-      if (!child.material || child.material.transparent) {
-        child.material = new THREE.MeshStandardMaterial({
-          color: 0xff0000, // Red color to make it easily visible
-          metalness: 0.1,
-          roughness: 0.8
-        });
-        console.log('Applied basic material to mesh:', child.name || 'unnamed');
-      }
-      
-      console.log('Applied shadows to mesh:', child.name || 'unnamed');
-    }
-  });
-  
-  cannon.add(playerModel);
-  console.log('Player model added to cannon group');
-}, undefined, (error) => {
-  console.error('Error loading player model:', error);
+// Configure texture settings (same as cannon ball)
+paramters.ballTextures.color.wrapS = THREE.RepeatWrapping;
+paramters.ballTextures.color.wrapT = THREE.RepeatWrapping;
+paramters.ballTextures.color.flipY = false;
+
+// Create the same material as the cannon ball
+const ballMaterial = new THREE.MeshBasicMaterial({
+  map: paramters.ballTextures.color,
+  color: 0x654321, // Dark brown tint to make it darker (same as cannon ball)
+  side: THREE.DoubleSide,
+  transparent: false,
 });
 
+// Create the ball model
+ballModel = new THREE.Mesh(ballGeometry, ballMaterial);
 
+// Apply the same scale as the cannon ball (football shape)
+ballModel.scale.set(1.1, 0.7, 0.7);
 
+// Position the ball model at the same location as the cannon ball
+ballModel.position.copy(
+  barrel.position.clone().add(new THREE.Vector3(0, -7, -1))
+);
+ballModel.castShadow = true;
+
+cannon.add(ballModel);
+
+// Ensure ball model is visible initially
+ballModel.visible = true;
+console.log('Ball model set to visible initially');
 
 const cannonCover = new THREE.Mesh(
   new THREE.SphereBufferGeometry(3, 32, 32),
@@ -612,11 +595,18 @@ const updateCannon = () => {
   angleXZ = Math.acos(cannonDirection.clone().x);
 };
 
+// Draw the Shooting ball-------------------
 let objectsToUpdate = [];
 const createCannonBall = () => {
   removeBallsGreaterThanOne();
   numberOfBalls--;
   numberofBallsWidget.innerHTML = numberOfBalls;
+  
+  // Hide the ball model when shooting
+  if (ballModel) {
+    ballModel.visible = false;
+    console.log('Ball model hidden when shooting');
+  }
   // Create a regular sphere and scale it to football shape
   const footballGeometry = new THREE.SphereGeometry(paramters.radius * 5, 32, 32);
   
@@ -629,7 +619,7 @@ const createCannonBall = () => {
     footballGeometry,
     new THREE.MeshBasicMaterial({
       map: paramters.ballTextures.color,
-      color: 0x654321, // Dark brown tint to make it darker
+      color: 0x654321,
       side: THREE.DoubleSide,
       transparent: false,
     })
@@ -648,6 +638,7 @@ const createCannonBall = () => {
   }
   axesHelper = new THREE.AxesHelper(5);
   scene.add(axesHelper);
+  
   const angular_speed = vector.create(
     paramters.angular_speedX,
     paramters.angular_speedY,
@@ -683,6 +674,11 @@ const removeBallsGreaterThanOne = () => {
       intersectObjects = intersectObjects.filter((i) => i !== e.cannonBall);
     });
     objectsToUpdate = [];
+    
+    // Show the ball model again when removing previous balls
+    if (ballModel) {
+      ballModel.visible = true;
+    }
   }
 };
 const updateTarget = (obj) => {
@@ -709,10 +705,16 @@ const updateTarget = (obj) => {
     obj.material.dispose();
     obj.geometry.dispose();
     scene.add(target);
+    
+    // Show the ball model again when target is hit and ball is removed
+    if (ballModel) {
+      ballModel.visible = true;
+      console.log('Ball model set to visible after successful shot');
+    }
   }, 1000);
 };
 
-const upadteWidgets = () => {
+const updateWidgets = () => {
   score++;
   scoreWidget.innerHTML = score;
   numberOfTargets--;
@@ -753,11 +755,25 @@ const checkBallPosition = (ball) => {
       scene.remove(ball);
       ball.geometry.dispose();
       ball.material.dispose();
-      let ballItem = objectsToUpdate.filter((e) => e.cannonBall === ball)[0];
+      // let ballItem = objectsToUpdate.filter((e) => e.cannonBall === ball)[0];
       objectsToUpdate = objectsToUpdate.filter((e) => e.cannonBall !== ball);
-      world.remove(ballItem.physicsBall);
+      // world.remove(ballItem.physicsBall);
       intersectObjects = intersectObjects.filter((obj) => obj !== ball);
       isCameraChasing = false;
+      
+      // Show the ball model again when shot is finished
+      if (ballModel) {
+        ballModel.visible = true;
+        console.log('Ball model set to visible after failed shot');
+        
+        // Check if ball model is still in the scene
+        if (ballModel.parent) {
+          console.log('Ball model is still in scene');
+        } else {
+          console.log('Ball model is NOT in scene - adding it back');
+          cannon.add(ballModel);
+        }
+      }
     }, 1000);
   }
 };
@@ -813,9 +829,10 @@ const tick = () => {
         shotedTaregt.push(intersect.object);
         intersect.object.material.color.set("#ff0000");
         updateTarget(intersect.object);
-        upadteWidgets();
+        updateWidgets();
         checkGame();
       } else if (intersect.object.geometry.type !== "PlaneGeometry") {
+        ballModel.visible = true;
         object.physicsBall.fraction(intersect);
       }
     }
