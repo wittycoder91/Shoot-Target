@@ -407,9 +407,28 @@ ballModel.castShadow = true;
 
 cannon.add(ballModel);
 
+// Function to ensure ball model is properly visible and positioned
+const ensureBallModelVisible = () => {
+  if (ballModel) {
+    // Ensure ball model is in the scene
+    if (!ballModel.parent) {
+      cannon.add(ballModel);
+      console.log('Ball model added back to cannon');
+    }
+    
+    // Update position to match cannon
+    ballModel.position.copy(
+      barrel.position.clone().add(new THREE.Vector3(0, -7, -1))
+    );
+    
+    // Make it visible
+    ballModel.visible = true;
+    console.log('Ball model made visible and positioned correctly');
+  }
+};
+
 // Ensure ball model is visible initially
-ballModel.visible = true;
-console.log('Ball model set to visible initially');
+ensureBallModelVisible();
 
 const cannonCover = new THREE.Mesh(
   new THREE.SphereBufferGeometry(3, 32, 32),
@@ -699,9 +718,7 @@ const removeBallsGreaterThanOne = () => {
     objectsToUpdate = [];
     
     // Show the ball model again when removing previous balls
-    if (ballModel) {
-      ballModel.visible = true;
-    }
+    ensureBallModelVisible();
   }
 };
 const updateTarget = () => {
@@ -722,13 +739,7 @@ const updateTarget = () => {
     barrel.position.copy(newCannonPosition);
     
     // Update ball model position to match the new cannon position
-    if (ballModel) {
-      ballModel.position.copy(
-        barrel.position.clone().add(new THREE.Vector3(0, -7, -1))
-      );
-      ballModel.visible = true;
-      console.log('Ball model position updated to match cannon');
-    }
+    ensureBallModelVisible();
     
     // Ensure target is in collision detection (it should always be)
     if (!intersectObjects.includes(target)) {
@@ -788,18 +799,7 @@ const checkBallPosition = (ball) => {
       isCameraChasing = false;
       
       // Show the ball model again when shot is finished
-      if (ballModel) {
-        ballModel.visible = true;
-        console.log('Ball model set to visible after failed shot');
-        
-        // Check if ball model is still in the scene
-        if (ballModel.parent) {
-          console.log('Ball model is still in scene');
-        } else {
-          console.log('Ball model is NOT in scene - adding it back');
-          cannon.add(ballModel);
-        }
-      }
+      ensureBallModelVisible();
     }, 1000);
   }
 };
@@ -832,6 +832,7 @@ let goalPredictionActive = false;
 
 // Shot state tracking to prevent multiple success/failure detections per shot
 let currentShotState = 'none'; // 'none', 'missed', 'success', 'failure'
+
 //const control = new OrbitControls(camera, canvas)
 
 const tick = () => {
@@ -939,7 +940,7 @@ const tick = () => {
               target.material.color.set("#ffffff"); // Reset to white
             }, 500);
             
-            ballModel.visible = true;
+            ensureBallModelVisible();
             object.physicsBall.fraction(intersect);
           }
         }
@@ -947,7 +948,7 @@ const tick = () => {
         else if (intersect.object.geometry.type !== "PlaneGeometry" && currentShotState === 'none') {
           console.log('MISS! Ball hit ground or other object');
           currentShotState = 'missed';
-          ballModel.visible = true;
+          ensureBallModelVisible();
           object.physicsBall.fraction(intersect);
         }
       }
