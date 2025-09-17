@@ -703,29 +703,37 @@ const removeBallsGreaterThanOne = () => {
 };
 const updateTarget = () => {
   setTimeout(() => {
-    // Random position for new target
-    const newPosition = new THREE.Vector3(0, 30, 350).add(
+    // Keep target in fixed position - no need to move it
+    // Target stays at (0, 30, 350)
+    
+    // Update cannon position instead for variety
+    const newCannonPosition = new THREE.Vector3(0, 10, 660).add(
       new THREE.Vector3(
-        (Math.random() - 0.4) * 40,
-        (Math.random() - 0.5) * 7,
-        0
+        (Math.random() - 0.5) * 100,  // Random X position (-50 to +50)
+        (Math.random() - 0.5) * 20,   // Random Y position (-10 to +10)
+        (Math.random() - 0.5) * 80    // Random Z position (-40 to +40)
       )
     );
     
-    // Update target position
-    target.position.copy(newPosition);
+    // Update cannon barrel position
+    barrel.position.copy(newCannonPosition);
     
-    // Ensure target is in collision detection for the new position
+    // Update ball model position to match the new cannon position
+    if (ballModel) {
+      ballModel.position.copy(
+        barrel.position.clone().add(new THREE.Vector3(0, -7, -1))
+      );
+      ballModel.visible = true;
+      console.log('Ball model position updated to match cannon');
+    }
+    
+    // Ensure target is in collision detection (it should always be)
     if (!intersectObjects.includes(target)) {
       intersectObjects.push(target);
-      console.log('Target added back to collision detection at new position');
+      console.log('Target added back to collision detection');
     }
     
-    // Show the ball model again when target is hit and ball is removed
-    if (ballModel) {
-      ballModel.visible = true;
-      console.log('Ball model set to visible after successful shot');
-    }
+    console.log('Cannon moved to new position:', newCannonPosition);
   }, 1000);
 };
 
@@ -882,9 +890,9 @@ const tick = () => {
           
           // Target dimensions: 35 width x 60 height
           // Goal post opening dimensions (the success area - blue region)
-          const goalOpeningWidth = 18;   // Width of the open area
-          const goalOpeningHeight = 22;  // Height of the open area
-          const goalOpeningOffsetY = 8;  // Vertical offset from center (open area is higher)
+          const goalOpeningWidth = 24;
+          const goalOpeningHeight = 28;
+          const goalOpeningOffsetY = 8;
           
           // Check if hit is within the goal post opening (success area)
           const isInGoalOpening = 
