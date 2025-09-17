@@ -243,27 +243,7 @@ window.addEventListener("dblclick", () => {
     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
   }
 });
-window.addEventListener("keydown", (event) => {
-  if (!objectsToUpdate.length) {
-    return;
-  }
-  if (event.code === "Digit2") {
-    isCameraChasing = true;
-  } else if (event.code === "Digit1") {
-    isCameraChasing = false;
-  }
-});
 
-window.addEventListener("resize", () => {
-  size.width = window.innerWidth;
-  size.height = window.innerHeight;
-  camera.aspect = size.width / size.height;
-  chasingCamera.aspect = size.width / size.height;
-  camera.updateProjectionMatrix();
-  chasingCamera.updateProjectionMatrix();
-  renderer.setSize(size.width, size.height);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
 
 window.addEventListener("mousemove", (event) => {
   mouse.x = event.pageX / size.width;
@@ -275,7 +255,9 @@ window.addEventListener("touchmove", (event) => {
   mouse.y = event.touches[0].clientY / size.height;
 });
 
-window.addEventListener("click", () => {
+
+// Shooting function to avoid code duplication
+const handleShooting = () => {
   if (
     !isClicked &&
     !isFinished &&
@@ -300,8 +282,27 @@ window.addEventListener("click", () => {
     setTimeout(() => (isCameraChasing = false), 8000);
     lastShotingTime = window.performance.now();
   }
+};
+
+// Mouse click event (for desktop)
+window.addEventListener("click", handleShooting);
+
+// Touch events for mobile devices (iPhone Safari)
+window.addEventListener("touchend", (event) => {
+  event.preventDefault(); // Prevent default touch behavior
+  handleShooting();
 });
-playAgain.addEventListener("mousedown", () => {
+
+// Pointer events for better cross-platform compatibility
+window.addEventListener("pointerup", (event) => {
+  // Only handle pointer events if it's not a mouse event (to avoid double firing)
+  if (event.pointerType !== "mouse") {
+    event.preventDefault();
+    handleShooting();
+  }
+});
+// Play Again button handler
+const handlePlayAgain = () => {
   gameFinshed.classList.add("hide");
   score = 0;
   numberOfBalls = 20;
@@ -309,6 +310,19 @@ playAgain.addEventListener("mousedown", () => {
   targetWidget.innerHTML = numberOfTargets;
   scoreWidget.innerHTML = score;
   setTimeout(() => (isFinished = false), 1000);
+};
+
+// Play Again button events for both mouse and touch
+playAgain.addEventListener("mousedown", handlePlayAgain);
+playAgain.addEventListener("touchend", (event) => {
+  event.preventDefault();
+  handlePlayAgain();
+});
+playAgain.addEventListener("pointerup", (event) => {
+  if (event.pointerType !== "mouse") {
+    event.preventDefault();
+    handlePlayAgain();
+  }
 });
 
 /* 
@@ -576,6 +590,19 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.physicallyCorrectLights = true;
 
+// Prevent touch scrolling on the canvas to avoid interference with game input
+canvas.addEventListener("touchstart", (event) => {
+  event.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener("touchmove", (event) => {
+  event.preventDefault();
+}, { passive: false });
+
+canvas.addEventListener("touchend", (event) => {
+  event.preventDefault();
+}, { passive: false });
+
 /*
     Shadows
 */
@@ -621,6 +648,29 @@ const updateCannon = () => {
 
 // Draw the Shooting ball-------------------
 let objectsToUpdate = [];
+
+// Add event listeners that reference objectsToUpdate, camera, and renderer
+window.addEventListener("keydown", (event) => {
+  if (!objectsToUpdate.length) {
+    return;
+  }
+  if (event.code === "Digit2") {
+    isCameraChasing = true;
+  } else if (event.code === "Digit1") {
+    isCameraChasing = false;
+  }
+});
+
+window.addEventListener("resize", () => {
+  size.width = window.innerWidth;
+  size.height = window.innerHeight;
+  camera.aspect = size.width / size.height;
+  chasingCamera.aspect = size.width / size.height;
+  camera.updateProjectionMatrix();
+  chasingCamera.updateProjectionMatrix();
+  renderer.setSize(size.width, size.height);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
 const createCannonBall = () => {
   removeBallsGreaterThanOne();
   numberOfBalls--;
