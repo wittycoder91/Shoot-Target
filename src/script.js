@@ -8,8 +8,8 @@ import Ball from "./physics/ball";
 import { loadModels } from "./config/Models";
 import { loadTargetTextues } from "./config/TargetTexure";
 import { CylinderBufferGeometry, PlaneBufferGeometry } from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+//import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import gsap from "gsap";
 import World from "./physics/world";
 import { loadFlagBaseTextures } from "./config/FlagBaseTextures";
@@ -103,7 +103,7 @@ const loadingManger = new THREE.LoadingManager(
   }
 );
 // const gltfLoader = new GLTFLoader(loadingManger);
-const fbxLoader = new FBXLoader(loadingManger);
+// const fbxLoader = new FBXLoader(loadingManger);
 const textureLoader = new THREE.TextureLoader(loadingManger);
 // const audioLoader = new THREE.AudioLoader(loadingManger);
 // audioLoader.load("sounds/cannonShootingSound.mp3", (audioBuffer) => {
@@ -184,9 +184,9 @@ worldfolder
 */
 ballFolder.add(paramters, "axesHelper");
 ballFolder.add(paramters, "radius", 0, 1, 0.01).name("ball radius");
-let massController = ballFolder
-  .add(paramters, "mass", 1, 5000, 0.5)
-  .name("ball mass");
+// let massController = ballFolder
+//   .add(paramters, "mass", 1, 5000, 0.5)
+//   .name("ball mass");
 ballFolder.add(paramters, "speed", 10, 35, 0.1).name("ball speed");
 ballFolder
   .add(paramters, "angular_speedX", -10, 10, 0.1)
@@ -419,6 +419,7 @@ cannonCover.position.y = -10;
 cannonCover.material.roughness = 0.5;
 barrel.add(cannonCover);
 
+// ------------------ Add the playground ----------------------
 const floor = new THREE.Mesh(
   new THREE.PlaneBufferGeometry(1500, 1500, 100, 100),
   new THREE.MeshStandardMaterial({
@@ -426,7 +427,7 @@ const floor = new THREE.Mesh(
     aoMap: grassTextures.grassAmbientOcclusionTexture,
     displacementMap: grassTextures.grassHeightTexture,
     metalnessMap: grassTextures.grassMetalnessTexture,
-    displacementScale: 2,
+    displacementScale: 0.0,
     normalMap: grassTextures.grassNormalTexture,
     roughnessMap: grassTextures.grassRoughnessTexture,
   })
@@ -437,7 +438,6 @@ floor.geometry.setAttribute(
   new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
 );
 floor.rotation.x = -Math.PI / 2;
-// ------------------ Add the playground ----------------------
 scene.add(floor);
 
 // ------------------ Add the base ----------------------
@@ -469,7 +469,7 @@ flagBase.geometry.setAttribute(
   new THREE.Float32BufferAttribute(flagBase.geometry.attributes.uv.array, 2)
 );
 flagBase.position.copy(new THREE.Vector3(60, 14, 578.1));
-scene.add(flagBase);
+// scene.add(flagBase);
 
 const flagGeometry = new PlaneBufferGeometry(13, 13, 32, 32);
 const flagMaterial = new THREE.ShaderMaterial({
@@ -488,80 +488,24 @@ flag.position.copy(flagBase.position.clone().add(new THREE.Vector3(-4, 12, 0)));
 flag.position.x = 52.889;
 flag.position.y = 25.928;
 flag.scale.y = 2 / 3;
-scene.add(flag);
+// scene.add(flag);
 
 // Create the visual target (red back of goal)
 let target = new THREE.Mesh(
-  new THREE.PlaneGeometry(35, 22),
+  new THREE.PlaneGeometry(35, 60),
   new THREE.MeshStandardMaterial({
     map: targetTextures.targetColorTexture,
     alphaTest: 0.1,
   })
 );
-target.position.set(0, 40, 480);
+target.position.set(0, 30, 350);
 scene.add(target);
 intersectObjects.push(target);
 
-// Create goal collision zones
-const goalPostWidth = 2;
-const goalPostHeight = 22;
-const goalOpeningWidth = 25;
+// No separate collision objects needed - we'll use only the target for collision detection
+// The target itself will determine success/failure based on hit position
 
-// Goal collision objects
-let leftPost, rightPost, crossbar, goalOpening;
-
-// Function to create goal collision zones
-const createGoalCollision = (position) => {
-  // Remove old collision objects if they exist
-  if (leftPost) scene.remove(leftPost);
-  if (rightPost) scene.remove(rightPost);
-  if (crossbar) scene.remove(crossbar);
-  if (goalOpening) scene.remove(goalOpening);
-  
-  // Remove from intersect objects
-  intersectObjects = intersectObjects.filter(obj => 
-    obj !== leftPost && obj !== rightPost && obj !== crossbar && obj !== goalOpening
-  );
-  
-  // Left goal post (failure zone)
-  leftPost = new THREE.Mesh(
-    new THREE.BoxGeometry(goalPostWidth, goalPostHeight, 1),
-    new THREE.MeshBasicMaterial({ visible: false })
-  );
-  leftPost.position.set(position.x - goalOpeningWidth/2 - goalPostWidth/2, position.y, position.z);
-  scene.add(leftPost);
-  intersectObjects.push(leftPost);
-  
-  // Right goal post (failure zone)
-  rightPost = new THREE.Mesh(
-    new THREE.BoxGeometry(goalPostWidth, goalPostHeight, 1),
-    new THREE.MeshBasicMaterial({ visible: false })
-  );
-  rightPost.position.set(position.x + goalOpeningWidth/2 + goalPostWidth/2, position.y, position.z);
-  scene.add(rightPost);
-  intersectObjects.push(rightPost);
-  
-  // Top crossbar (failure zone)
-  crossbar = new THREE.Mesh(
-    new THREE.BoxGeometry(goalOpeningWidth + goalPostWidth * 2, 2, 1),
-    new THREE.MeshBasicMaterial({ visible: false })
-  );
-  crossbar.position.set(position.x, position.y + goalPostHeight/2 + 1, position.z);
-  scene.add(crossbar);
-  intersectObjects.push(crossbar);
-  
-  // Goal opening (success zone) - positioned slightly in front of the target
-  goalOpening = new THREE.Mesh(
-    new THREE.BoxGeometry(goalOpeningWidth, goalPostHeight, 1),
-    new THREE.MeshBasicMaterial({ visible: false })
-  );
-  goalOpening.position.set(position.x, position.y, position.z - 5); // 5 units in front of target
-  scene.add(goalOpening);
-  intersectObjects.push(goalOpening);
-};
-
-// Create initial goal collision
-createGoalCollision(new THREE.Vector3(0, 40, 480));
+// Target is already added to intersectObjects, no additional collision setup needed
 
 /*
     Overlay
@@ -672,6 +616,9 @@ const createCannonBall = () => {
     }
   }
   
+  // Reset shot tracking for new shot
+  shotedTaregt = [];
+  
   // Reset goal prediction flag for new shot
   goalPredictionActive = false;
   
@@ -757,7 +704,7 @@ const removeBallsGreaterThanOne = () => {
 const updateTarget = () => {
   setTimeout(() => {
     // Random position for new target
-    const newPosition = new THREE.Vector3(0, 40, 480).add(
+    const newPosition = new THREE.Vector3(0, 30, 350).add(
       new THREE.Vector3(
         (Math.random() - 0.4) * 40,
         (Math.random() - 0.5) * 7,
@@ -768,8 +715,11 @@ const updateTarget = () => {
     // Update target position
     target.position.copy(newPosition);
     
-    // Create new goal collision at new position
-    createGoalCollision(newPosition);
+    // Ensure target is in collision detection for the new position
+    if (!intersectObjects.includes(target)) {
+      intersectObjects.push(target);
+      console.log('Target added back to collision detection at new position');
+    }
     
     // Show the ball model again when target is hit and ball is removed
     if (ballModel) {
@@ -888,35 +838,32 @@ const tick = () => {
     axesHelper.visible = paramters.axesHelper;
     
     // PREDICT if ball will be successful BEFORE collision detection
-    if (!goalPredictionActive && goalOpening) {
+    if (!goalPredictionActive && target) {
       const ballPosition = object.cannonBall.position;
-      const goalPosition = goalOpening.position;
-      const distanceToGoal = ballPosition.distanceTo(goalPosition);
+      const targetPosition = target.position;
+      const distanceToTarget = ballPosition.distanceTo(targetPosition);
       
-      // If ball is getting close to goal opening
-      if (distanceToGoal < 80) { // Within 80 units of goal
+      // If ball is getting close to target
+      if (distanceToTarget < 80) { // Within 80 units of target
         const ballVelocity = object.physicsBall.velocity;
-        const directionToGoal = goalPosition.clone().sub(ballPosition).normalize();
+        const directionToTarget = targetPosition.clone().sub(ballPosition).normalize();
         const velocityDirection = ballVelocity.clone().normalize();
         
-        // Check if ball is moving towards the goal opening
-        const dotProduct = directionToGoal.dot(velocityDirection);
-        if (dotProduct > 0.8) { // Ball is moving towards goal (80% alignment)
-          console.log('PREDICTING SUCCESS! Ball will likely score - preparing smooth transition...');
+        // Check if ball is moving towards the target
+        const dotProduct = directionToTarget.dot(velocityDirection);
+        if (dotProduct > 0.8) { // Ball is moving towards target (80% alignment)
+          console.log('PREDICTING SUCCESS! Ball will likely hit target - preparing smooth transition...');
           goalPredictionActive = true;
           
           // PREPARE SETTINGS IN ADVANCE for smooth transition
-          // Remove goal posts and crossbar from collision detection
-          intersectObjects = intersectObjects.filter(obj => 
-            obj !== leftPost && obj !== rightPost && obj !== crossbar
-          );
+          // No need to remove separate collision objects since we only use the target
           
-          // Make the ball non-collidable with everything except target and goal opening
+          // Make the ball non-collidable with everything except target
           object.physicsBall.collisionFilterGroup = 0;
           object.physicsBall.collisionFilterMask = 0;
           
           // Show subtle hint that goal is coming
-          target.material.color.set("#ffeeee"); // Very light red hint
+          target.material.color.set("#eeeeff"); // Very light blue hint
         }
       }
     }
@@ -924,43 +871,61 @@ const tick = () => {
     const intersects = raycaster.intersectObjects(intersectObjects, true);
     for (let intersect of intersects) {
       if (!shotedTaregt.includes(intersect.object)) {
-        // Check if it's the goal opening (success - ball goes through cleanly)
-        if (intersect.object === goalOpening) {
-          shotedTaregt.push(intersect.object);
-          console.log('GOAL! Ball went through the goal opening');
+        // Check if it's the visual target - need to determine if hit open area or goal post structure
+        if (intersect.object === target) {
+          // Calculate the hit position relative to the target's center
+          const targetPosition = target.position;
+          const hitPoint = intersect.point;
           
-          // Show red color effect on target
-          target.material.color.set("#ff0000");
-          setTimeout(() => {
-            target.material.color.set("#ffffff"); // Reset to white
-          }, 500);
+          // Convert hit point to local target coordinates
+          const localHitPoint = hitPoint.clone().sub(targetPosition);
           
-          // Since we already prepared the settings, ball should smoothly go through
-          // Just remove target from collision detection so ball can pass through
-          intersectObjects = intersectObjects.filter(obj => obj !== target);
-          setTimeout(() => {
-            // Make target collidable again after 2 seconds
-            intersectObjects.push(target);
-          }, 2000);
+          // Target dimensions: 35 width x 60 height
+          // Goal post opening dimensions (the success area - blue region)
+          const goalOpeningWidth = 18;   // Width of the open area
+          const goalOpeningHeight = 22;  // Height of the open area
+          const goalOpeningOffsetY = 8;  // Vertical offset from center (open area is higher)
           
-          // Reset prediction flag
-          goalPredictionActive = false;
+          // Check if hit is within the goal post opening (success area)
+          const isInGoalOpening = 
+            Math.abs(localHitPoint.x) <= goalOpeningWidth / 2 && // Within opening width
+            localHitPoint.y >= goalOpeningOffsetY - goalOpeningHeight / 2 && // Above bottom of opening
+            localHitPoint.y <= goalOpeningOffsetY + goalOpeningHeight / 2;   // Below top of opening
           
-          updateTarget();
-          updateWidgets();
-          checkGame();
-        }
-        // Check if it's the visual target (red back of goal - FAILURE)
-        else if (intersect.object === target) {
-          console.log('MISS! Ball hit the back of the goal (net)');
-          ballModel.visible = true;
-          object.physicsBall.fraction(intersect);
-        }
-        // Check if it's a goal post or crossbar (failure)
-        else if (intersect.object === leftPost || intersect.object === rightPost || intersect.object === crossbar) {
-          console.log('MISS! Ball hit the goal post/crossbar');
-          ballModel.visible = true;
-          object.physicsBall.fraction(intersect);
+          if (isInGoalOpening) {
+            // SUCCESS - Hit the open area (blue region)
+            console.log('GOAL! Ball went through the goal post opening');
+            shotedTaregt.push(intersect.object);
+            
+            // Show green color effect on target for success
+            target.material.color.set("#00ff00");
+            setTimeout(() => {
+              target.material.color.set("#ffffff"); // Reset to white
+            }, 500);
+            
+            // Remove target from collision detection temporarily so ball can pass through
+            intersectObjects = intersectObjects.filter(obj => obj !== target);
+            // Note: Target will be added back to collision detection in updateTarget() after 1 second
+            
+            // Reset prediction flag
+            goalPredictionActive = false;
+            
+            updateTarget();
+            updateWidgets();
+            checkGame();
+          } else {
+            // FAILURE - Hit the goal post structure (red regions)
+            console.log('MISS! Ball hit the goal post structure');
+            
+            // Show red color effect on target for failure
+            target.material.color.set("#ff0000");
+            setTimeout(() => {
+              target.material.color.set("#ffffff"); // Reset to white
+            }, 500);
+            
+            ballModel.visible = true;
+            object.physicsBall.fraction(intersect);
+          }
         }
         // Other objects (ground, etc.)
         else if (intersect.object.geometry.type !== "PlaneGeometry") {
