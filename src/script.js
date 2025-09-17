@@ -619,6 +619,9 @@ const createCannonBall = () => {
   // Reset shot tracking for new shot
   shotedTaregt = [];
   
+  // Reset shot state for new shot
+  currentShotState = 'none';
+  
   // Reset goal prediction flag for new shot
   goalPredictionActive = false;
   
@@ -826,6 +829,9 @@ let shotedTaregt = [];
 const clock = new THREE.Clock();
 let oldElapsedTime = 0;
 let goalPredictionActive = false;
+
+// Shot state tracking to prevent multiple success/failure detections per shot
+let currentShotState = 'none'; // 'none', 'missed', 'success', 'failure'
 //const control = new OrbitControls(camera, canvas)
 
 const tick = () => {
@@ -880,7 +886,7 @@ const tick = () => {
     for (let intersect of intersects) {
       if (!shotedTaregt.includes(intersect.object)) {
         // Check if it's the visual target - need to determine if hit open area or goal post structure
-        if (intersect.object === target) {
+        if (intersect.object === target && currentShotState === 'none') {
           // Calculate the hit position relative to the target's center
           const targetPosition = target.position;
           const hitPoint = intersect.point;
@@ -903,6 +909,7 @@ const tick = () => {
           if (isInGoalOpening) {
             // SUCCESS - Hit the open area (blue region)
             console.log('GOAL! Ball went through the goal post opening');
+            currentShotState = 'success';
             shotedTaregt.push(intersect.object);
             
             // Show green color effect on target for success
@@ -924,6 +931,7 @@ const tick = () => {
           } else {
             // FAILURE - Hit the goal post structure (red regions)
             console.log('MISS! Ball hit the goal post structure');
+            currentShotState = 'failure';
             
             // Show red color effect on target for failure
             target.material.color.set("#ff0000");
@@ -935,8 +943,10 @@ const tick = () => {
             object.physicsBall.fraction(intersect);
           }
         }
-        // Other objects (ground, etc.)
-        else if (intersect.object.geometry.type !== "PlaneGeometry") {
+        // Other objects (ground, etc.) - mark as missed if not already determined
+        else if (intersect.object.geometry.type !== "PlaneGeometry" && currentShotState === 'none') {
+          console.log('MISS! Ball hit ground or other object');
+          currentShotState = 'missed';
           ballModel.visible = true;
           object.physicsBall.fraction(intersect);
         }
