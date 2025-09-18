@@ -15,7 +15,7 @@ import * as THREE from "three";
 
   // Create fence/ad board geometry directly without loading GLTF model
   // First row of ad boards (left side)
-  for (let i = -22; i < 22; i++) {
+  for (let i = -7; i < 10; i++) {
     const adBoard = new THREE.Mesh(
       new THREE.BoxGeometry(2, 30, 50),
       flagMaterial
@@ -27,7 +27,7 @@ import * as THREE from "three";
   }
 
   // Second row of ad boards (right side)
-  for (let i = -22; i < 22; i++) {
+  for (let i = -7; i < 10; i++) {
     const adBoard = new THREE.Mesh(
       new THREE.BoxGeometry(2, 30, 50),
       flagMaterial
@@ -44,7 +44,7 @@ import * as THREE from "three";
       new THREE.BoxGeometry(52.5, 30, 2),
       flagMaterial
     );
-    adBoard.position.set(192 + (i * 52.5), 4, -620);
+    adBoard.position.set(192 + (i * 52.5), 4, 125);
     adBoard.castShadow = true;
     adBoard.receiveShadow = true;
     scene.add(adBoard);

@@ -531,7 +531,7 @@ let target = new THREE.Mesh(
     alphaTest: 0.1,
   })
 );
-target.position.set(0, 30, 350);
+target.position.set(0, 30, 300);
 scene.add(target);
 intersectObjects.push(target);
 
