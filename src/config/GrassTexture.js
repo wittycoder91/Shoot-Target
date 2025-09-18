@@ -1,8 +1,13 @@
 import * as THREE from "three";
+import createFootballFieldTexture from "./FootballFieldTexture";
 
 const loadGrassTextures = (textureLoader) => {
   const grassTextures = {};
-  const grassColorTexture = textureLoader.load("textures\\grass\\7\\color.png");
+  
+  // Use custom football field texture instead of grass texture
+  const grassColorTexture = createFootballFieldTexture();
+  
+  // Keep other grass textures for normal mapping, roughness, etc.
   const grassMetalnessTexture = textureLoader.load(
     "textures\\grass\\7\\metalness.png"
   );
@@ -19,21 +24,20 @@ const loadGrassTextures = (textureLoader) => {
     "textures\\grass\\7\\height.png"
   );
 
-  grassColorTexture.repeat.set(65, 65);
+  // Set repeat for other textures (not the color texture as it's custom)
   grassAmbientOcclusionTexture.repeat.set(65, 65);
   grassNormalTexture.repeat.set(65, 65);
   grassRoughnessTexture.repeat.set(65, 65);
   grassHeightTexture.repeat.set(65, 65);
   grassMetalnessTexture.repeat.set(65, 65);
 
-  grassColorTexture.wrapS = THREE.RepeatWrapping;
+  // Set wrapping for other textures
   grassAmbientOcclusionTexture.wrapS = THREE.RepeatWrapping;
   grassNormalTexture.wrapS = THREE.RepeatWrapping;
   grassRoughnessTexture.wrapS = THREE.RepeatWrapping;
   grassHeightTexture.wrapS = THREE.RepeatWrapping;
   grassMetalnessTexture.wrapS = THREE.RepeatWrapping;
 
-  grassColorTexture.wrapT = THREE.RepeatWrapping;
   grassAmbientOcclusionTexture.wrapT = THREE.RepeatWrapping;
   grassNormalTexture.wrapT = THREE.RepeatWrapping;
   grassRoughnessTexture.wrapT = THREE.RepeatWrapping;
