@@ -398,20 +398,25 @@ const ballGeometry = new THREE.SphereGeometry(paramters.radius * 5, 32, 32);
 paramters.ballTextures.color.wrapS = THREE.RepeatWrapping;
 paramters.ballTextures.color.wrapT = THREE.RepeatWrapping;
 paramters.ballTextures.color.flipY = false;
+paramters.ballTextures.color.repeat.set(1, 1);
 
 // Create the same material as the cannon ball
-const ballMaterial = new THREE.MeshBasicMaterial({
+const ballMaterial = new THREE.MeshStandardMaterial({
   map: paramters.ballTextures.color,
-  color: 0x654321, // Dark brown tint to make it darker (same as cannon ball)
+  color: 0x8B4513, // Better brown color for football
   side: THREE.DoubleSide,
   transparent: false,
+  roughness: 0.8,
+  metalness: 0.0,
+  normalMap: paramters.ballTextures.normal,
+  roughnessMap: paramters.ballTextures.roughness,
 });
 
 // Create the ball model
 ballModel = new THREE.Mesh(ballGeometry, ballMaterial);
 
 // Apply the same scale as the cannon ball (football shape)
-ballModel.scale.set(1.1, 0.7, 0.7);
+ballModel.scale.set(1.15, 0.65, 0.65);
 
 // Position the ball model at the same location as the cannon ball
 ballModel.position.copy(
@@ -706,19 +711,24 @@ const createCannonBall = () => {
   paramters.ballTextures.color.wrapS = THREE.RepeatWrapping;
   paramters.ballTextures.color.wrapT = THREE.RepeatWrapping;
   paramters.ballTextures.color.flipY = false;
+  paramters.ballTextures.color.repeat.set(1, 1);
   
   let cannonBall = new THREE.Mesh(
     footballGeometry,
-    new THREE.MeshBasicMaterial({
+    new THREE.MeshStandardMaterial({
       map: paramters.ballTextures.color,
-      color: 0x654321,
+      color: 0x8B4513, // Better brown color for football
       side: THREE.DoubleSide,
       transparent: false,
+      roughness: 0.8,
+      metalness: 0.0,
+      normalMap: paramters.ballTextures.normal,
+      roughnessMap: paramters.ballTextures.roughness,
     })
   );
   
   // Scale to make it football-shaped (this preserves UV mapping)
-  cannonBall.scale.set(1.1, 0.7, 0.7);
+  cannonBall.scale.set(1.15, 0.65, 0.65);
   cannonBall.castShadow = true;
   cannonBall.position.copy(
     barrel.position.clone().add(new THREE.Vector3(0, 3.5, -1))
