@@ -81,7 +81,7 @@ const paramters = {
   resistanseCoeff: 0.8,
   frictionCoeff: 0.8,
   mass: 1000,
-  speed: 20,
+  speed: 25,
 };
 
 /*
@@ -221,7 +221,7 @@ paramters.ballTextures = ballTextures[0];
     Models
 */
 // loadModels(scene, gltfLoader, intersectObjects);
-loadModels(scene);
+loadModels(scene, intersectObjects);
 
 /*
     Events
@@ -382,7 +382,7 @@ const barrel = new THREE.Mesh(
   new THREE.CylinderBufferGeometry(5, 3, 20, 32, 1, true, Math.PI * 2),
   metalMaterial
 );
-barrel.position.set(0, 10, 660);
+barrel.position.set(0, 10, 660); // Aligned with target center (x=0)
 barrel.rotation.x = (-Math.PI / 4) * 1.5;
 barrel.material.roughness = 0.5;
 barrel.material.side = THREE.DoubleSide;
@@ -420,7 +420,7 @@ ballModel.scale.set(1.15, 0.65, 0.65);
 
 // Position the ball model at the same location as the cannon ball
 ballModel.position.copy(
-  barrel.position.clone().add(new THREE.Vector3(0, -7, -1))
+  barrel.position.clone().add(new THREE.Vector3(0, -8.5, -1))
 );
 ballModel.castShadow = true;
 
@@ -435,10 +435,11 @@ const ensureBallModelVisible = () => {
       console.log('Ball model added back to cannon');
     }
     
-    // Update position to match cannon
-    ballModel.position.copy(
-      barrel.position.clone().add(new THREE.Vector3(0, -7, -1))
-    );
+    // Update position to match cannon and ensure visibility
+    const ballPosition = barrel.position.clone().add(new THREE.Vector3(0, -8.5, -1));
+    // Ensure ball is always above ground level (field is at y=0)
+    ballPosition.y = Math.max(ballPosition.y, 2); // Minimum 2 units above ground
+    ballModel.position.copy(ballPosition);
     
     // Make it visible
     ballModel.visible = true;
@@ -446,8 +447,17 @@ const ensureBallModelVisible = () => {
   }
 };
 
-// Ensure ball model is visible initially
+// Ensure ball model is visible initially and properly positioned
 ensureBallModelVisible();
+
+// Force initial ball model positioning to ensure proper alignment and visibility
+if (ballModel) {
+  const initialBallPosition = barrel.position.clone().add(new THREE.Vector3(0, -8.5, -1));
+  // Ensure ball is always above ground level (field is at y=0)
+  initialBallPosition.y = Math.max(initialBallPosition.y, 2); // Minimum 2 units above ground
+  ballModel.position.copy(initialBallPosition);
+  console.log('Initial ball model position set to:', ballModel.position);
+}
 
 const cannonCover = new THREE.Mesh(
   new THREE.SphereBufferGeometry(3, 32, 32),
@@ -458,8 +468,16 @@ cannonCover.material.roughness = 0.5;
 barrel.add(cannonCover);
 
 // ------------------ Add the playground ----------------------
+// Create floor that extends forward to fill the gap in front of the camera
+// Camera is at z = 740, so field needs to extend much further forward
+// Boundaries: x: -150 to 270 (width: 420), z: -225 to 800 (extended length: 1025)
+const playgroundWidth = 420;  // From -150 to 270
+const playgroundLength = 1025; // Extended from -225 to 800 to fill front gap
+const playgroundCenterX = 60; // Center between -150 and 270
+const playgroundCenterZ = 287.5; // Center between -225 and 800
+
 const floor = new THREE.Mesh(
-  new THREE.PlaneBufferGeometry(1500, 1500, 100, 100),
+  new THREE.PlaneBufferGeometry(playgroundWidth, playgroundLength, 50, 50),
   new THREE.MeshStandardMaterial({
     map: grassTextures.grassColorTexture,
     aoMap: grassTextures.grassAmbientOcclusionTexture,
@@ -476,22 +494,76 @@ floor.geometry.setAttribute(
   new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
 );
 floor.rotation.x = -Math.PI / 2;
+floor.position.set(playgroundCenterX, 0, playgroundCenterZ);
 scene.add(floor);
 
-// ------------------ Add the base ----------------------
-// const base = new THREE.Mesh(
-//   new THREE.BoxBufferGeometry(20, 4, 32, 32),
-//   new THREE.MeshStandardMaterial({
-//     map: baseTextures.baseColorTexture,
-//     aoMap: baseTextures.baseAmbientOcclusionTexture,
-//     roughnessMap: baseTextures.baseRoughnessTexture,
-//     metalnessMap: baseTextures.baseMetalnessTexture,
-//     normalMap: baseTextures.baseNormalTexture,
-//   })
-// );
-// base.position.copy(barrel.position.clone());
-// base.position.y += -8.8;
-// scene.add(base);
+// ------------------ Add field markings and yard lines ----------------------
+// Create yard lines across the field
+// const yardLineMaterial = new THREE.MeshStandardMaterial({
+//   color: 0xffffff,
+//   transparent: true,
+//   opacity: 0.9,
+// });
+
+// // Add yard lines - rotated 90 degrees
+// for (let i = 0; i <= 10; i++) {
+//   const yardLine = new THREE.Mesh(
+//     new THREE.PlaneBufferGeometry(1, playgroundLength, 1, 1), // Lines run vertically along length
+//     yardLineMaterial
+//   );
+//   yardLine.rotation.x = -Math.PI / 2;
+//   yardLine.rotation.z = Math.PI / 2; // Rotate 90 degrees
+//   yardLine.position.set(
+//     playgroundCenterX - (playgroundWidth / 2) + (i * playgroundWidth / 10), // Position along width
+//     0.01, // Slightly above the floor
+//     playgroundCenterZ // Center along length
+//   );
+//   scene.add(yardLine);
+// }
+
+// // Add HORIZONTAL hash marks across the field width (swapped direction)
+// for (let i = 0; i <= 20; i++) {
+//   const hashMark = new THREE.Mesh(
+//     new THREE.PlaneBufferGeometry(playgroundWidth, 1, 1, 1), // Lines run horizontally across width
+//     yardLineMaterial
+//   );
+//   hashMark.rotation.x = -Math.PI / 2;
+//   hashMark.position.set(
+//     playgroundCenterX, // Center along width
+//     0.01, // Slightly above the floor
+//     playgroundCenterZ - (playgroundLength / 2) + (i * playgroundLength / 20) // Position along length
+//   );
+//   scene.add(hashMark);
+// }
+
+// // Add yard numbers
+// const numberMaterial = new THREE.MeshStandardMaterial({
+//   color: 0xffffff,
+//   transparent: true,
+//   opacity: 0.8,
+// });
+
+// // Create yard numbers positioned along the field length (matching vertical field lines)
+// // Updated to match the vertical line layout
+// const yardNumbers = [50, 40, 30, 20, 10, 0, 10, 20, 30, 40, 50];
+// for (let i = 0; i < yardNumbers.length; i++) {
+//   if (yardNumbers[i] !== 0) { // Skip the center line number
+//     const numberGeometry = new THREE.PlaneBufferGeometry(8, 12, 1, 1);
+//     const numberMesh = new THREE.Mesh(numberGeometry, numberMaterial);
+//     numberMesh.rotation.x = -Math.PI / 2;
+//     numberMesh.position.set(
+//       playgroundCenterX - 180, // Position on the left side of field
+//       0.02, // Above the field lines
+//       playgroundCenterZ - (playgroundLength / 2) + (i * playgroundLength / 10) // Position along field length
+//     );
+//     scene.add(numberMesh);
+    
+//     // Add number on the right side too
+//     const numberMeshRight = numberMesh.clone();
+//     numberMeshRight.position.x = playgroundCenterX + 180;
+//     scene.add(numberMeshRight);
+//   }
+// }
 
 const flagBase = new THREE.Mesh(
   new CylinderBufferGeometry(1, 1, 35, 32),
@@ -536,7 +608,7 @@ let target = new THREE.Mesh(
     alphaTest: 0.1,
   })
 );
-target.position.set(0, 30, 300);
+target.position.set(0, 30, 0);
 scene.add(target);
 intersectObjects.push(target);
 
@@ -544,7 +616,6 @@ intersectObjects.push(target);
 // The target itself will determine success/failure based on hit position
 
 // Target is already added to intersectObjects, no additional collision setup needed
-
 /*
     Overlay
 */
@@ -639,9 +710,9 @@ const updateCannon = () => {
   barrel.rotation.x = -lerp(Math.PI / 8, Math.PI / 2, mouse.y);
   cannonDirection.set(0, 1, 0);
   cannonDirection.applyQuaternion(barrel.quaternion);
-  let offset = cannonDirection.clone().multiplyScalar(-40);
+  let offset = cannonDirection.clone().multiplyScalar(-60); // Increased from -40 to -60 for better field view
   camera.position.copy(barrel.position.clone().add(offset));
-  camera.position.y = barrel.position.y + 10;
+  camera.position.y = barrel.position.y + 15; // Increased from 10 to 15 for better overview
   camera.lookAt(
     barrel.position.clone().add(cannonDirection.clone().multiplyScalar(30))
   );
@@ -731,7 +802,7 @@ const createCannonBall = () => {
   cannonBall.scale.set(1.15, 0.65, 0.65);
   cannonBall.castShadow = true;
   cannonBall.position.copy(
-    barrel.position.clone().add(new THREE.Vector3(0, 3.5, -1))
+    barrel.position.clone().add(new THREE.Vector3(0, 2, -1))
   );
   scene.add(cannonBall);
 
@@ -747,7 +818,7 @@ const createCannonBall = () => {
     paramters.angular_speedZ
   );
   let physicsBall = new Ball(
-    barrel.position.clone().add(new THREE.Vector3(0, 3, -1)),
+    barrel.position.clone().add(new THREE.Vector3(0, 1.5, -1)),
     paramters.speed,
     angleXY,
     angleXZ,
@@ -784,14 +855,15 @@ const removeBallsGreaterThanOne = () => {
 const updateTarget = () => {
   setTimeout(() => {
     // Keep target in fixed position - no need to move it
-    // Target stays at (0, 30, 350)
+    // Target stays at (0, 30, 0)
     
-    // Update cannon position instead for variety
+    // Update cannon position but keep it aligned with target center
+    // Only add small random variations to maintain alignment
     const newCannonPosition = new THREE.Vector3(0, 10, 660).add(
       new THREE.Vector3(
-        (Math.random() - 0.5) * 100,  // Random X position (-50 to +50)
-        (Math.random() - 0.5) * 20,   // Random Y position (-10 to +10)
-        (Math.random() - 0.5) * 80    // Random Z position (-40 to +40)
+        (Math.random() - 0.5) * 20,   // Small random X position (-10 to +10) to maintain alignment
+        (Math.random() - 0.5) * 10,   // Small random Y position (-5 to +5)
+        (Math.random() - 0.5) * 40    // Small random Z position (-20 to +20)
       )
     );
     
@@ -801,13 +873,22 @@ const updateTarget = () => {
     // Update ball model position to match the new cannon position
     ensureBallModelVisible();
     
+    // Force update ball model position to ensure proper alignment and visibility
+    if (ballModel) {
+      const ballPosition = barrel.position.clone().add(new THREE.Vector3(0, -8.5, -1));
+      // Ensure ball is always above ground level (field is at y=0)
+      ballPosition.y = Math.max(ballPosition.y, 2); // Minimum 2 units above ground
+      ballModel.position.copy(ballPosition);
+      console.log('Ball model position updated to:', ballModel.position);
+    }
+    
     // Ensure target is in collision detection (it should always be)
     if (!intersectObjects.includes(target)) {
       intersectObjects.push(target);
       console.log('Target added back to collision detection');
     }
     
-    console.log('Cannon moved to new position:', newCannonPosition);
+    console.log('Cannon moved to new position (aligned with target):', newCannonPosition);
   }, 1000);
 };
 
@@ -839,27 +920,98 @@ const checkGame = () => {
   }
 };
 
+const checkWallCollisions = (object) => {
+  const ball = object.cannonBall;
+  const physicsBall = object.physicsBall;
+  
+  // Define wall boundaries (same as ad board positions)
+  const leftWall = -150;   // Left ad board position
+  const rightWall = 270;   // Right ad board position
+  const backWall = -225;   // Back ad board position
+  const frontWall = 800;   // Front boundary
+  
+  // Check if ball is hitting walls and bounce it back
+  if (ball.position.x <= leftWall) {
+    // Ball hit left wall - bounce back
+    ball.position.x = leftWall + 1; // Move ball slightly away from wall
+    physicsBall.position.x = leftWall + 1;
+    physicsBall.velocity.x = Math.abs(physicsBall.velocity.x) * 0.8; // Bounce with energy loss
+    console.log('Ball bounced off left wall');
+  }
+  
+  if (ball.position.x >= rightWall) {
+    // Ball hit right wall - bounce back
+    ball.position.x = rightWall - 1; // Move ball slightly away from wall
+    physicsBall.position.x = rightWall - 1;
+    physicsBall.velocity.x = -Math.abs(physicsBall.velocity.x) * 0.8; // Bounce with energy loss
+    console.log('Ball bounced off right wall');
+  }
+  
+  if (ball.position.z <= backWall) {
+    // Ball hit back wall - bounce back
+    ball.position.z = backWall + 1; // Move ball slightly away from wall
+    physicsBall.position.z = backWall + 1;
+    physicsBall.velocity.z = Math.abs(physicsBall.velocity.z) * 0.8; // Bounce with energy loss
+    console.log('Ball bounced off back wall');
+  }
+  
+  if (ball.position.z >= frontWall) {
+    // Ball hit front wall - bounce back
+    ball.position.z = frontWall - 1; // Move ball slightly away from wall
+    physicsBall.position.z = frontWall - 1;
+    physicsBall.velocity.z = -Math.abs(physicsBall.velocity.z) * 0.8; // Bounce with energy loss
+    console.log('Ball bounced off front wall');
+  }
+};
+
 const checkBallPosition = (ball) => {
+  // Define exact playground boundaries based on ad board positions
+  const playgroundLeft = -150;   // Left ad board position
+  const playgroundRight = 270;   // Right ad board position  
+  const playgroundBack = -225;   // Back ad board position
+  const playgroundFront = 800;   // Front boundary (extended for camera)
+  
+  // Add small buffer to prevent premature boundary detection
+  const buffer = 5; // 5 unit buffer
+  
+  // Check if ball is within playground boundaries (with buffer)
   if (
-    ball.position.z >= -900 &&
-    ball.position.z <= 900 &&
-    ball.position.x >= -900 &&
-    ball.position.x <= 900
+    ball.position.x >= (playgroundLeft + buffer) &&
+    ball.position.x <= (playgroundRight - buffer) &&
+    ball.position.z >= (playgroundBack + buffer) &&
+    ball.position.z <= (playgroundFront - buffer)
   ) {
-    return;
+    return; // Ball is still within playground, continue
   } else {
+    // Ball is outside playground boundaries - restart shot
+    console.log('Ball went outside playground boundaries - restarting shot');
+    
     setTimeout(() => {
+      // Remove the current ball
       scene.remove(ball);
       ball.geometry.dispose();
       ball.material.dispose();
-      // let ballItem = objectsToUpdate.filter((e) => e.cannonBall === ball)[0];
       objectsToUpdate = objectsToUpdate.filter((e) => e.cannonBall !== ball);
-      // world.remove(ballItem.physicsBall);
       intersectObjects = intersectObjects.filter((obj) => obj !== ball);
       isCameraChasing = false;
       
-      // Show the ball model again when shot is finished
+      // Show the ball model again
       ensureBallModelVisible();
+      
+      // Reset shot state for automatic restart
+      shotedTaregt = [];
+      currentShotState = 'none';
+      goalPredictionActive = false;
+      
+      // Reset target to default state
+      if (target) {
+        target.material.color.set("#ffffff");
+        if (!intersectObjects.includes(target)) {
+          intersectObjects.push(target);
+        }
+      }
+      
+      console.log('Shot restarted - ball is ready for new shot');
     }, 1000);
   }
 };
@@ -905,6 +1057,10 @@ const tick = () => {
   for (const object of objectsToUpdate) {
     object.cannonBall.position.copy(object.physicsBall.position);
     object.cannonBall.quaternion.copy(object.physicsBall.quaternion);
+    
+    // Check for wall collisions and bounce before other collision detection
+    checkWallCollisions(object);
+    
     checkBallPosition(object.cannonBall);
     rayOrigin = object.cannonBall.position;
     raycaster.set(rayOrigin, rayDirection);
@@ -946,6 +1102,8 @@ const tick = () => {
     const intersects = raycaster.intersectObjects(intersectObjects, true);
     for (let intersect of intersects) {
       if (!shotedTaregt.includes(intersect.object)) {
+        // Wall collisions are now handled in checkWallCollisions function
+        
         // Check if it's the visual target - need to determine if hit open area or goal post structure
         if (intersect.object === target && currentShotState === 'none') {
           // Calculate the hit position relative to the target's center

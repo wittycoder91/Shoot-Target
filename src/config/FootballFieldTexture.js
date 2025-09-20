@@ -33,118 +33,118 @@ const createFootballFieldTexture = () => {
     }
   }
   
-  // Draw yardage lines (every 10 yards)
+  // Draw yardage lines (every 10 yards) - HORIZONTAL lines across the field
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   
-  // Major yardage lines (every 10 yards) - only on the playing field (10-110 yards)
+  // Major yardage lines (every 10 yards) - HORIZONTAL lines across the field width
   for (let yard = 10; yard <= 110; yard += 10) {
-    const x = yard * scaleX;
+    const y = (yard - 10) * (height / 100); // Map 10-110 yards to 0-height
     ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
     ctx.stroke();
   }
   
-  // Add yard numbers (every 10 yards)
+  // Add yard numbers (every 10 yards) - positioned along horizontal lines
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 80px Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   
-  // Left side numbers (10-50)
+  // Left side numbers (10-50) - positioned along horizontal lines
   for (let yard = 10; yard <= 50; yard += 10) {
-    const x = yard * scaleX;
+    const y = (yard - 10) * (height / 100); // Map 10-110 yards to 0-height
     ctx.save();
-    ctx.translate(x, height * 0.15);
+    ctx.translate(width * 0.15, y);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(yard.toString(), 0, 0);
     ctx.restore();
     
     ctx.save();
-    ctx.translate(x, height * 0.85);
+    ctx.translate(width * 0.85, y);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(yard.toString(), 0, 0);
     ctx.restore();
   }
   
-  // Right side numbers (40-10, counting down)
+  // Right side numbers (40-10, counting down) - positioned along horizontal lines
   for (let yard = 60; yard <= 100; yard += 10) {
-    const x = yard * scaleX;
+    const y = (yard - 10) * (height / 100); // Map 10-110 yards to 0-height
     const displayYard = 100 - yard; // Reverse the numbers
     
     ctx.save();
-    ctx.translate(x, height * 0.15);
+    ctx.translate(width * 0.15, y);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(displayYard.toString(), 0, 0);
     ctx.restore();
     
     ctx.save();
-    ctx.translate(x, height * 0.85);
+    ctx.translate(width * 0.85, y);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText(displayYard.toString(), 0, 0);
     ctx.restore();
   }
   
-  // Add hash marks (small lines at the ends of the field)
+  // Add hash marks (small lines) - VERTICAL lines along the field length
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 2;
   
-  // Hash marks every yard on the playing field (10-110 yards)
-  for (let yard = 10; yard <= 110; yard++) {
-    const x = yard * scaleX;
+  // Hash marks every yard along the field width (VERTICAL lines)
+  for (let i = 0; i <= 20; i++) {
+    const x = (i * width) / 20; // Distribute evenly across field width
     
-    // Top hash marks (shorter lines)
+    // Left hash marks (shorter lines)
     ctx.beginPath();
     ctx.moveTo(x, height * 0.05);
     ctx.lineTo(x, height * 0.12);
     ctx.stroke();
     
-    // Bottom hash marks (shorter lines)
+    // Right hash marks (shorter lines)
     ctx.beginPath();
     ctx.moveTo(x, height * 0.88);
     ctx.lineTo(x, height * 0.95);
     ctx.stroke();
   }
   
-  // Add end zones with different styling
+  // Add end zones with different styling - HORIZONTAL zones
   ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-  ctx.fillRect(0, 0, 10 * scaleX, height); // Left end zone
-  ctx.fillRect(110 * scaleX, 0, 10 * scaleX, height); // Right end zone
+  ctx.fillRect(0, 0, width, height * 0.1); // Top end zone
+  ctx.fillRect(0, height * 0.9, width, height * 0.1); // Bottom end zone
   
-  // Add goal lines (thicker)
+  // Add goal lines (thicker) - HORIZONTAL lines
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.moveTo(10 * scaleX, 0);
-  ctx.lineTo(10 * scaleX, height);
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.moveTo(110 * scaleX, 0);
-  ctx.lineTo(110 * scaleX, height);
-  ctx.stroke();
-  
-  // Add sideline markers (thick lines on the sides)
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
+  ctx.moveTo(0, 0); // Top goal line
   ctx.lineTo(width, 0);
   ctx.stroke();
   
   ctx.beginPath();
-  ctx.moveTo(0, height);
+  ctx.moveTo(0, height); // Bottom goal line
   ctx.lineTo(width, height);
   ctx.stroke();
   
-  // Add midfield line (50-yard line)
+  // Add sideline markers (thick lines on the sides) - VERTICAL lines
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(0, height);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(width, 0);
+  ctx.lineTo(width, height);
+  ctx.stroke();
+  
+  // Add midfield line (50-yard line) - HORIZONTAL line
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.moveTo(60 * scaleX, 0);
-  ctx.lineTo(60 * scaleX, height);
+  ctx.moveTo(0, height / 2); // Middle of field
+  ctx.lineTo(width, height / 2);
   ctx.stroke();
   
   // Convert canvas to texture
